@@ -466,10 +466,12 @@ describe('loadParcelConfig', () => {
               },
             ],
           },
-          bundler: {
-            packageName: 'parcel-bundler-base',
-            resolveFrom: '.parcelrc',
-          },
+          bundlers: [
+            {
+              packageName: 'parcel-bundler-base',
+              resolveFrom: '.parcelrc',
+            },
+          ],
         },
         DEFAULT_OPTIONS.packageManager,
         false,
@@ -526,10 +528,12 @@ describe('loadParcelConfig', () => {
               },
             ],
           },
-          bundler: {
-            packageName: 'parcel-bundler-base',
-            resolveFrom: '.parcelrc',
-          },
+          bundlers: [
+            {
+              packageName: 'parcel-bundler-base',
+              resolveFrom: '.parcelrc',
+            },
+          ],
           runtimes: {},
           namers: [],
           optimizers: {},
@@ -606,7 +610,7 @@ describe('loadParcelConfig', () => {
       ]);
       assert(Object.keys(config.transformers).length > 1);
       assert.deepEqual(config.resolvers, defaultConfig.resolvers);
-      assert.deepEqual(config.bundler, defaultConfig.bundler);
+      assert.deepEqual(config.bundlers, defaultConfig.bundlers);
       assert.deepEqual(config.namers, defaultConfig.namers || []);
       assert.deepEqual(config.packagers, defaultConfig.packagers || {});
       assert.deepEqual(config.optimizers, defaultConfig.optimizers || {});

@@ -42,7 +42,7 @@ export type RawParcelConfig = {|
   extends?: PackageName | FilePath | Array<PackageName | FilePath>,
   resolvers?: RawParcelConfigPipeline,
   transformers?: {[Glob]: RawParcelConfigPipeline, ...},
-  bundler?: PackageName,
+  bundlers?: RawParcelConfigPipeline,
   namers?: RawParcelConfigPipeline,
   runtimes?: {[EnvironmentContext]: RawParcelConfigPipeline, ...},
   packagers?: {[Glob]: PackageName, ...},
@@ -683,11 +683,6 @@ export type ResolveResult = {|
 
 export type Bundler = {|
   bundle({|
-    bundleGraph: MutableBundleGraph,
-    options: PluginOptions,
-    logger: PluginLogger,
-  |}): Async<void>,
-  optimize({|
     bundleGraph: MutableBundleGraph,
     options: PluginOptions,
     logger: PluginLogger,

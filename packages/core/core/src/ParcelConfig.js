@@ -39,7 +39,7 @@ export default class ParcelConfig {
   filePath: FilePath;
   resolvers: PureParcelConfigPipeline;
   transformers: GlobMap<ExtendableParcelConfigPipeline>;
-  bundler: ?ParcelPluginNode;
+  bundlers: PureParcelConfigPipeline;
   namers: PureParcelConfigPipeline;
   runtimes: {[EnvironmentContext]: PureParcelConfigPipeline, ...};
   packagers: GlobMap<ParcelPluginNode>;
@@ -59,7 +59,7 @@ export default class ParcelConfig {
     this.resolvers = config.resolvers || [];
     this.transformers = config.transformers || {};
     this.runtimes = config.runtimes || {};
-    this.bundler = config.bundler;
+    this.bundlers = config.bundlers;
     this.namers = config.namers || [];
     this.packagers = config.packagers || {};
     this.optimizers = config.optimizers || {};
@@ -84,7 +84,7 @@ export default class ParcelConfig {
       transformers: this.transformers,
       validators: this.validators,
       runtimes: this.runtimes,
-      bundler: this.bundler,
+      bundlers: this.bundlers,
       namers: this.namers,
       packagers: this.packagers,
       optimizers: this.optimizers,
@@ -158,7 +158,7 @@ export default class ParcelConfig {
     return this.loadPlugins<Resolver>(this._getResolverNodes());
   }
 
-  _getValidatorNodes(filePath: FilePath): Array<ParcelPluginNode> {
+  _getValidatorNodes(filePath: FilePath): $ReadOnlyArray<ParcelPluginNode> {
     let validators: PureParcelConfigPipeline =
       this.matchGlobMapPipelines(filePath, this.validators) || [];
 
@@ -186,7 +186,7 @@ export default class ParcelConfig {
   _getTransformerNodes(
     filePath: FilePath,
     pipeline?: ?string,
-  ): Array<ParcelPluginNode> {
+  ): $ReadOnlyArray<ParcelPluginNode> {
     let transformers: PureParcelConfigPipeline | null = this.matchGlobMapPipelines(
       filePath,
       this.transformers,
@@ -210,20 +210,20 @@ export default class ParcelConfig {
     );
   }
 
-  getBundlerName(): string {
-    if (!this.bundler) {
-      throw new Error('No bundler specified in .parcelrc config');
+  _getBundlerNodes() {
+    if (this.bundlers.length === 0) {
+      throw new Error('No bundler plugins specified in .parcelrc config');
     }
 
-    return this.bundler.packageName;
+    return this.bundlers;
   }
 
-  getBundler(): Promise<{|version: Semver, plugin: Bundler|}> {
-    if (!this.bundler) {
-      throw new Error('No bundler specified in .parcelrc config');
-    }
+  getBundlerNames(): Array<string> {
+    return this._getBundlerNodes().map(b => b.packageName);
+  }
 
-    return this.loadPlugin<Bundler>(this.bundler);
+  getBundlers() {
+    return this.loadPlugins<Bundler>(this._getBundlerNodes());
   }
 
   getNamers() {
