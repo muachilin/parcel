@@ -52,23 +52,9 @@ type TraversalContext = {|
 
 export async function concat(bundle: Bundle, bundleGraph: BundleGraph) {
   let queue = new PromiseQueue({maxConcurrent: 32});
-  bundle.traverse((node, shouldWrap) => {
-    switch (node.type) {
-      case 'dependency':
-        // Mark assets that should be wrapped, based on metadata in the incoming dependency tree
-        if (shouldWrap || node.value.meta.shouldWrap) {
-          let resolved = bundleGraph.getDependencyResolution(
-            node.value,
-            bundle,
-          );
-          if (resolved) {
-            resolved.meta.shouldWrap = true;
-          }
-          return true;
-        }
-        break;
-      case 'asset':
-        queue.add(() => processAsset(bundle, node.value));
+  bundle.traverse(node => {
+    if (node.type === 'asset') {
+      queue.add(() => processAsset(bundle, node.value));
     }
   });
 

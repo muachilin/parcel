@@ -1,5 +1,9 @@
 {
-  "bundlers": ["@parcel/bundler-default", "@parcel/bundler-optimize"],
+  "bundlers": [
+    "@parcel/bundler-default",
+    "@parcel/bundler-optimize",
+    "@parcel/bundler-js"
+  ],
   "transformers": {
     "types:*.{ts,tsx}": ["@parcel/transformer-typescript-types"],
     "bundle-text:*": ["@parcel/transformer-inline-string", "..."],

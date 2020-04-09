@@ -19,6 +19,7 @@ import type {
   Meta,
   MutableAsset as IMutableAsset,
   PackageJSON,
+  ReadOnlyMeta,
   Stats,
   Symbol,
 } from '@parcel/types';
@@ -96,7 +97,7 @@ class BaseAsset {
     return this.#asset.value.filePath;
   }
 
-  get meta(): Meta {
+  get meta(): ReadOnlyMeta {
     return this.#asset.value.meta;
   }
 
@@ -223,6 +224,10 @@ export class MutableAsset extends BaseAsset implements IMutableAsset {
 
   set type(type: string): void {
     this.#asset.value.type = type;
+  }
+
+  get meta(): Meta {
+    return this.#asset.value.meta;
   }
 
   get isIsolated(): boolean {

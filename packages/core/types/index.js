@@ -23,7 +23,17 @@ export type JSONValue =
   | Array<JSONValue>
   | JSONObject;
 
+export type ReadOnlyJSONValue =
+  | null
+  | void // ? Is this okay?
+  | boolean
+  | number
+  | string
+  | $ReadOnlyArray<ReadOnlyJSONValue>
+  | ReadOnlyJSONObject;
+
 export type JSONObject = {[key: string]: JSONValue, ...};
+export type ReadOnlyJSONObject = $ReadOnly<{[key: string]: JSONValue, ...}>;
 
 export type PackageName = string;
 export type FilePath = string;
@@ -254,6 +264,7 @@ export type SourceLocation = {|
 |};
 
 export type Meta = JSONObject;
+export type ReadOnlyMeta = ReadOnlyJSONObject;
 
 export type Symbol = string;
 
@@ -305,7 +316,7 @@ export interface BaseAsset {
   +fs: FileSystem;
   +filePath: FilePath;
   +id: string;
-  +meta: Meta;
+  +meta: ReadOnlyMeta;
   +isIsolated: boolean;
   +isInline: boolean;
   +isSplittable: ?boolean;
@@ -335,6 +346,7 @@ export interface BaseAsset {
 }
 
 export interface MutableAsset extends BaseAsset {
+  +meta: Meta;
   isIsolated: boolean;
   isInline: boolean;
   isSplittable: ?boolean;
