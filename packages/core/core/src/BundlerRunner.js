@@ -77,36 +77,28 @@ export default class BundlerRunner {
       this.options,
     );
 
-    let {plugin: bundler} = await this.config.getBundler();
+    let bundlers = await this.config.getBundlers();
 
-    try {
-      await bundler.bundle({
-        bundleGraph: mutableBundleGraph,
-        options: this.pluginOptions,
-        logger: new PluginLogger({origin: this.config.getBundlerName()}),
-      });
-    } catch (e) {
-      throw new ThrowableDiagnostic({
-        diagnostic: errorToDiagnostic(e, this.config.getBundlerName()),
-      });
+    for (let bundler of bundlers) {
+      try {
+        await bundler.plugin.bundle({
+          bundleGraph: mutableBundleGraph,
+          options: this.pluginOptions,
+          logger: new PluginLogger({origin: bundler.name}),
+        });
+      } catch (e) {
+        throw new ThrowableDiagnostic({
+          diagnostic: errorToDiagnostic(e, bundler.name),
+        });
+      }
+      assertSignalNotAborted(signal);
+
+      await dumpGraphToGraphViz(
+        bundleGraph,
+        'after_bundle_' + bundler.name.replace(/\//g, '_'),
+      );
     }
-    assertSignalNotAborted(signal);
 
-    await dumpGraphToGraphViz(bundleGraph, 'after_bundle');
-    try {
-      await bundler.optimize({
-        bundleGraph: mutableBundleGraph,
-        options: this.pluginOptions,
-        logger: new PluginLogger({origin: this.config.getBundlerName()}),
-      });
-    } catch (e) {
-      throw new ThrowableDiagnostic({
-        diagnostic: errorToDiagnostic(e, this.config.getBundlerName()),
-      });
-    }
-    assertSignalNotAborted(signal);
-
-    await dumpGraphToGraphViz(bundleGraph, 'after_optimize');
     await this.nameBundles(internalBundleGraph);
 
     await applyRuntimes({
@@ -128,13 +120,14 @@ export default class BundlerRunner {
   }
 
   async getCacheKey(assetGraph: AssetGraph) {
-    let name = this.config.getBundlerName();
-    let {version} = await this.config.getBundler();
+    let bundlers = (await this.config.getBundlers()).map(({name, version}) => [
+      name,
+      version,
+    ]);
 
     return md5FromObject({
       parcelVersion: PARCEL_VERSION,
-      name,
-      version,
+      bundlers,
       hash: assetGraph.getHash(),
     });
   }

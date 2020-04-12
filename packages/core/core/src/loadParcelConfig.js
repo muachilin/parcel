@@ -151,12 +151,7 @@ export function processConfig(
     resolveFrom: configFile.resolveFrom,
     resolvers: processPipeline(configFile.resolvers, configFile.filePath),
     transformers: processMap(configFile.transformers, configFile.filePath),
-    bundler: configFile.bundler
-      ? {
-          packageName: configFile.bundler,
-          resolveFrom: configFile.filePath,
-        }
-      : undefined,
+    bundlers: processPipeline(configFile.bundlers, configFile.filePath),
     namers: processPipeline(configFile.namers, configFile.filePath),
     runtimes: processMap(configFile.runtimes, configFile.filePath),
     packagers: processMap(configFile.packagers, configFile.filePath),
@@ -253,7 +248,6 @@ export function mergeConfigs(
   return new ParcelConfig(
     {
       filePath: ext.filePath,
-      // $FlowFixMe this seems like a flow bug, ExtendableParcelConfigPipeline is compatible with PureParcelConfigPipeline
       resolvers: mergePipelines(base.resolvers, ext.resolvers),
       transformers: mergeMaps(
         base.transformers,
@@ -261,13 +255,11 @@ export function mergeConfigs(
         mergePipelines,
       ),
       validators: mergeMaps(base.validators, ext.validators, mergePipelines),
-      bundler: ext.bundler || base.bundler,
-      // $FlowFixMe this seems like a flow bug, ExtendableParcelConfigPipeline is compatible with PureParcelConfigPipeline
+      bundlers: mergePipelines(base.bundlers, ext.bundlers),
       namers: mergePipelines(base.namers, ext.namers),
       runtimes: mergeMaps(base.runtimes, ext.runtimes),
       packagers: mergeMaps(base.packagers, ext.packagers),
       optimizers: mergeMaps(base.optimizers, ext.optimizers, mergePipelines),
-      // $FlowFixMe this seems like a flow bug, ExtendableParcelConfigPipeline is compatible with PureParcelConfigPipeline
       reporters: mergePipelines(base.reporters, ext.reporters),
     },
     base.packageManager,

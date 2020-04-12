@@ -107,10 +107,7 @@ export default {
         },
       ],
     },
-    bundler: {
-      type: 'string',
-      __validate: validatePluginName('bundler', 'bundler'),
-    },
+    bundlers: pipelineSchema('bundler', 'bundlers'),
     resolvers: pipelineSchema('resolver', 'resolvers'),
     transformers: mapPipelineSchema('transformer', 'transformers'),
     validators: mapPipelineSchema('validator', 'validators'),

@@ -23,7 +23,17 @@ export type JSONValue =
   | Array<JSONValue>
   | JSONObject;
 
+export type ReadOnlyJSONValue =
+  | null
+  | void // ? Is this okay?
+  | boolean
+  | number
+  | string
+  | $ReadOnlyArray<ReadOnlyJSONValue>
+  | ReadOnlyJSONObject;
+
 export type JSONObject = {[key: string]: JSONValue, ...};
+export type ReadOnlyJSONObject = $ReadOnly<{[key: string]: JSONValue, ...}>;
 
 export type PackageName = string;
 export type FilePath = string;
@@ -42,7 +52,7 @@ export type RawParcelConfig = {|
   extends?: PackageName | FilePath | Array<PackageName | FilePath>,
   resolvers?: RawParcelConfigPipeline,
   transformers?: {[Glob]: RawParcelConfigPipeline, ...},
-  bundler?: PackageName,
+  bundlers?: RawParcelConfigPipeline,
   namers?: RawParcelConfigPipeline,
   runtimes?: {[EnvironmentContext]: RawParcelConfigPipeline, ...},
   packagers?: {[Glob]: PackageName, ...},
@@ -254,6 +264,7 @@ export type SourceLocation = {|
 |};
 
 export type Meta = JSONObject;
+export type ReadOnlyMeta = ReadOnlyJSONObject;
 
 export type Symbol = string;
 
@@ -305,7 +316,7 @@ export interface BaseAsset {
   +fs: FileSystem;
   +filePath: FilePath;
   +id: string;
-  +meta: Meta;
+  +meta: ReadOnlyMeta;
   +isIsolated: boolean;
   +isInline: boolean;
   +isSplittable: ?boolean;
@@ -335,6 +346,7 @@ export interface BaseAsset {
 }
 
 export interface MutableAsset extends BaseAsset {
+  +meta: Meta;
   isIsolated: boolean;
   isInline: boolean;
   isSplittable: ?boolean;
@@ -613,36 +625,21 @@ export type BundleGroup = {|
   entryAssetId: string,
 |};
 
-export interface MutableBundleGraph {
+export interface MutableBundleGraph extends BundleGraph {
   addAssetGraphToBundle(Asset, Bundle): void;
   addBundleToBundleGroup(Bundle, BundleGroup): void;
   createAssetReference(Dependency, Asset): void;
   createBundle(CreateBundleOpts): Bundle;
   createBundleGroup(Dependency, Target): BundleGroup;
-  findBundlesWithAsset(Asset): Array<Bundle>;
-  findBundlesWithDependency(Dependency): Array<Bundle>;
   getDependencyAssets(Dependency): Array<Asset>;
-  getDependencyResolution(Dependency): ?Asset;
   getParentBundlesOfBundleGroup(BundleGroup): Array<Bundle>;
-  getBundleGroupsContainingBundle(Bundle): Array<BundleGroup>;
-  getBundlesInBundleGroup(BundleGroup): Array<Bundle>;
-  getSiblingBundles(bundle: Bundle): Array<Bundle>;
   getTotalSize(Asset): number;
-  isAssetInAncestorBundles(Bundle, Asset): boolean;
   removeAssetGraphFromBundle(Asset, Bundle): void;
   removeBundleGroup(bundleGroup: BundleGroup): void;
-  resolveExternalDependency(
-    dependency: Dependency,
-    bundle?: Bundle,
-  ): ?(
-    | {|type: 'bundle_group', value: BundleGroup|}
-    | {|type: 'asset', value: Asset|}
-  );
   internalizeAsyncDependency(bundle: Bundle, dependency: Dependency): void;
   traverse<TContext>(
     GraphVisitor<BundlerBundleGraphTraversable, TContext>,
   ): ?TContext;
-  traverseBundles<TContext>(GraphVisitor<Bundle, TContext>): ?TContext;
   traverseContents<TContext>(
     GraphVisitor<BundlerBundleGraphTraversable, TContext>,
   ): ?TContext;
@@ -659,12 +656,14 @@ export interface BundleGraph {
   getIncomingDependencies(asset: Asset): Array<Dependency>;
   resolveExternalDependency(
     dependency: Dependency,
-    bundle: Bundle,
+    bundle: ?Bundle,
   ): ?(
     | {|type: 'bundle_group', value: BundleGroup|}
     | {|type: 'asset', value: Asset|}
   );
-  getDependencyResolution(dependency: Dependency, bundle: Bundle): ?Asset;
+  getDependencyResolution(dependency: Dependency, bundle: ?Bundle): ?Asset;
+  findBundlesWithAsset(Asset): Array<Bundle>;
+  findBundlesWithDependency(Dependency): Array<Bundle>;
   isAssetInAncestorBundles(bundle: Bundle, asset: Asset): boolean;
   isAssetReferenced(asset: Asset): boolean;
   isAssetReferencedByDependant(bundle: Bundle, asset: Asset): boolean;
@@ -676,10 +675,9 @@ export interface BundleGraph {
   ): SymbolResolution;
   getExportedSymbols(asset: Asset): Array<SymbolResolution>;
   traverseBundles<TContext>(
-    visit: GraphTraversalCallback<Bundle, TContext>,
-    startBundle?: Bundle,
+    visit: GraphVisitor<Bundle, TContext>,
+    startBundle: ?Bundle,
   ): ?TContext;
-  findBundlesWithAsset(Asset): Array<Bundle>;
 }
 
 export type BundleResult = {|
@@ -697,11 +695,6 @@ export type ResolveResult = {|
 
 export type Bundler = {|
   bundle({|
-    bundleGraph: MutableBundleGraph,
-    options: PluginOptions,
-    logger: PluginLogger,
-  |}): Async<void>,
-  optimize({|
     bundleGraph: MutableBundleGraph,
     options: PluginOptions,
     logger: PluginLogger,
